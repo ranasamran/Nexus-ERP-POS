@@ -1,0 +1,5 @@
+{
+  "name": "Nexus ERP & POS",
+  "description": "A comprehensive Enterprise Resource Planning system featuring advanced Inventory Management, multiple Point of Sale layouts, Supplier/Customer CRM, and detailed Analytics. Built with React 19, TypeScript, and Tailwind CSS.",
+  "requestFramePermissions": []
+}
