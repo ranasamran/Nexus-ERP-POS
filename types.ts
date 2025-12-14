@@ -11,6 +11,7 @@ export interface Product {
   warehouse: string;
   status: 'Active' | 'Low Stock' | 'Out of Stock';
   selected?: boolean;
+  description?: string;
 }
 
 export interface CartItem extends Product {

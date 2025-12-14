@@ -1,23 +1,35 @@
 
 import React, { useState } from 'react';
-import { MOCK_PURCHASE_ORDERS, MOCK_SUPPLIERS } from '../services/mockData';
-import { Search, Filter, Plus, MoreHorizontal, Calendar, ChevronDown, ChevronUp, Truck, Mail } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
+import { Search, Filter, Plus, MoreHorizontal, Calendar, ChevronDown, ChevronUp, Truck, Mail, CheckCircle, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
+import { useNavigate } from 'react-router-dom';
 
 export const PurchaseOrders: React.FC = () => {
+  const { purchaseOrders, suppliers, receivePurchaseOrder } = useData();
+  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const togglePO = (id: string) => {
-    if (expandedId === id) {
-      setExpandedId(null);
-    } else {
-      setExpandedId(id);
-    }
+    setExpandedId(expandedId === id ? null : id);
   };
 
   const getSupplierDetails = (name: string) => {
-      return MOCK_SUPPLIERS.find(s => s.name === name);
+      return suppliers.find(s => s.name === name);
   };
+
+  const handleReceive = async (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      if (window.confirm("Mark this order as Received? This will update your inventory stock levels.")) {
+          await receivePurchaseOrder(id);
+      }
+  };
+
+  const filteredPOs = purchaseOrders.filter(po => 
+    po.supplierName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    po.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -27,7 +39,7 @@ export const PurchaseOrders: React.FC = () => {
                 <p className="text-slate-500">Manage procurement from suppliers.</p>
             </div>
              <div className="flex gap-3">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 shadow-sm">
+                <button onClick={() => navigate('/purchase-orders/create')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 shadow-sm">
                     <Plus className="w-4 h-4" /> Create PO
                 </button>
             </div>
@@ -40,6 +52,8 @@ export const PurchaseOrders: React.FC = () => {
                     <input 
                         type="text" 
                         placeholder="Search purchase orders..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                 </div>
@@ -61,11 +75,11 @@ export const PurchaseOrders: React.FC = () => {
                             <th className="px-6 py-3">Warehouse</th>
                             <th className="px-6 py-3 text-right">Total</th>
                             <th className="px-6 py-3">Status</th>
-                            <th className="px-6 py-3"></th>
+                            <th className="px-6 py-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {MOCK_PURCHASE_ORDERS.map((po) => {
+                        {filteredPOs.map((po) => {
                             const supplier = getSupplierDetails(po.supplierName);
                             const isExpanded = expandedId === po.id;
 
@@ -99,10 +113,15 @@ export const PurchaseOrders: React.FC = () => {
                                             {po.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-slate-400 hover:text-slate-600 p-1">
-                                            <MoreHorizontal className="w-5 h-5" />
-                                        </button>
+                                    <td className="px-6 py-4">
+                                        {po.status !== 'Received' && (
+                                            <button 
+                                                onClick={(e) => handleReceive(e, po.id)}
+                                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded flex items-center gap-1 shadow-sm transition-colors"
+                                            >
+                                                <CheckCircle className="w-3 h-3" /> Receive
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                                 {isExpanded && (
@@ -165,7 +184,7 @@ export const PurchaseOrders: React.FC = () => {
                                                         <thead className="bg-gray-50/50 text-slate-500 border-b border-gray-100">
                                                             <tr>
                                                                 <th className="px-4 py-2 text-left font-medium">Product Name</th>
-                                                                <th className="px-4 py-2 text-left font-medium">SKU</th>
+                                                                <th className="px-4 py-2 text-left font-medium">Product ID</th>
                                                                 <th className="px-4 py-2 text-center font-medium">Quantity</th>
                                                                 <th className="px-4 py-2 text-right font-medium">Unit Cost</th>
                                                                 <th className="px-4 py-2 text-right font-medium">Total</th>
@@ -194,6 +213,13 @@ export const PurchaseOrders: React.FC = () => {
                                 )}
                             </React.Fragment>
                         )})}
+                        {filteredPOs.length === 0 && (
+                            <tr>
+                                <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                                    No purchase orders found.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

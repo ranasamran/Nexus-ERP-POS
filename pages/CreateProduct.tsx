@@ -1,31 +1,78 @@
 
-import React, { useState } from 'react';
-import { ArrowLeft, Upload, DollarSign, Box } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Upload, DollarSign, Box, Link as LinkIcon, Save } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MOCK_CATEGORIES } from '../services/mockData';
+import { useData } from '../contexts/DataContext';
+import { Product } from '../types';
 
 export const CreateProduct: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const { id } = useParams();
+  const { products, addProduct, updateProduct } = useData();
+  const isEditMode = Boolean(id);
+
+  const [formData, setFormData] = useState<Partial<Product>>({
     name: '',
     sku: '',
     category: '',
-    price: '',
-    cost: '',
-    stock: '',
+    price: 0,
+    cost: 0,
+    stock: 0,
     warehouse: 'Main Warehouse A',
+    status: 'Active',
     description: '',
+    image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=300&h=300&fit=crop',
+    selected: false
   });
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode && id) {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        setFormData(product);
+      } else {
+        // If product not found in current list (maybe unloaded), navigating back might be safer or show loading
+        if (products.length > 0) { // Only redirect if we are sure products are loaded and it's missing
+            navigate('/inventory'); 
+        }
+      }
+    }
+  }, [id, products, isEditMode, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+       ...prev, 
+       [name]: (name === 'price' || name === 'cost' || name === 'stock') ? parseFloat(value) || 0 : value 
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Product Created Successfully!');
-    navigate('/inventory');
+    setLoading(true);
+
+    try {
+        const productData = {
+            ...formData,
+            // Calculate status based on stock if not manually set (simple logic)
+            status: (formData.stock || 0) === 0 ? 'Out of Stock' : (formData.stock || 0) < 10 ? 'Low Stock' : 'Active',
+        } as Product;
+
+        if (isEditMode && id) {
+            await updateProduct({ ...productData, id });
+        } else {
+            await addProduct({ ...productData, id: crypto.randomUUID() });
+        }
+        navigate('/inventory');
+    } catch (error) {
+        console.error("Failed to save product", error);
+        alert("Failed to save product. Please try again.");
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +82,7 @@ export const CreateProduct: React.FC = () => {
           <button onClick={() => navigate('/inventory')} className="p-2 hover:bg-gray-100 rounded-full text-slate-500">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl font-bold text-slate-900">Create New Product</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{isEditMode ? 'Edit Product' : 'Create New Product'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -85,7 +132,7 @@ export const CreateProduct: React.FC = () => {
                 <textarea
                   name="description"
                   rows={3}
-                  value={formData.description}
+                  value={formData.description || ''}
                   onChange={handleChange}
                   className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Product description..."
@@ -141,7 +188,7 @@ export const CreateProduct: React.FC = () => {
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Inventory</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Initial Stock</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Current Stock</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Box className="h-4 w-4 text-slate-400" />
@@ -176,19 +223,49 @@ export const CreateProduct: React.FC = () => {
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Images</h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-slate-500 hover:bg-gray-50 transition-colors cursor-pointer">
-                <Upload className="w-10 h-10 mb-2 text-slate-400" />
-                <p className="font-medium">Click to upload or drag and drop</p>
-                <p className="text-xs mt-1">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="w-full md:w-1/3 aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 w-full space-y-4">
+                     <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <LinkIcon className="h-4 w-4 text-slate-400" />
+                            </div>
+                            <input
+                                type="url"
+                                name="image"
+                                value={formData.image}
+                                onChange={handleChange}
+                                className="w-full pl-9 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="https://..."
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Paste a URL for the product image.</p>
+                    </div>
+
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-slate-500 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <Upload className="w-8 h-8 mb-2 text-slate-400" />
+                        <p className="font-medium text-sm">Upload Image</p>
+                        <p className="text-xs mt-1">(Upload functionality simulated)</p>
+                    </div>
+                </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button type="button" onClick={() => navigate('/inventory')} className="px-6 py-2 border border-gray-300 rounded-lg text-slate-700 font-medium hover:bg-gray-50">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 pb-10">
+            <button type="button" onClick={() => navigate('/inventory')} className="px-6 py-2.5 border border-gray-300 rounded-lg text-slate-700 font-medium hover:bg-gray-50 transition-colors">
                 Cancel
             </button>
-            <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm">
-                Create Product
+            <button 
+                type="submit" 
+                disabled={loading}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+            >
+                <Save className="w-4 h-4" />
+                {loading ? 'Saving...' : isEditMode ? 'Update Product' : 'Create Product'}
             </button>
           </div>
         </form>

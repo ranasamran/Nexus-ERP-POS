@@ -1,16 +1,15 @@
 
 import React, { useState, useMemo } from 'react';
-import { MOCK_PRODUCTS, MOCK_STOCK_HISTORY } from '../services/mockData';
-import { Search, Filter, Plus, MoreHorizontal, ArrowUpDown, ChevronDown, CheckSquare, Square, Trash2, RefreshCw, Edit, AlertCircle, X, TrendingUp, TrendingDown, DollarSign, History } from 'lucide-react';
+import { MOCK_STOCK_HISTORY } from '../services/mockData';
+import { Search, Plus, MoreHorizontal, ArrowUpDown, ChevronDown, CheckSquare, Square, Trash2, RefreshCw, Edit, AlertCircle, X, TrendingUp, TrendingDown, DollarSign, History, Wifi, WifiOff } from 'lucide-react';
 import clsx from 'clsx';
 import { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { useData } from '../contexts/DataContext';
 
 export const Inventory: React.FC = () => {
   const navigate = useNavigate();
-  
-  // State for products (initialized from mock data)
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const { products, updateProduct, deleteProduct, isOnline, isSyncing, loading } = useData();
   
   // View and Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,14 +86,16 @@ export const Inventory: React.FC = () => {
       setIsHistoryModalOpen(true);
   };
 
-  const handleBatchAction = (action: string) => {
+  const handleBatchAction = async (action: string) => {
     if (action === 'update-stock') {
       openAdjustModal(selectedProducts);
     } else if (action === 'update-price') {
       openPriceModal();
     } else if (action === 'delete') {
       if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
-        setProducts(prev => prev.filter(p => !selectedProducts.includes(p.id)));
+        for (const id of selectedProducts) {
+          await deleteProduct(id);
+        }
         setSelectedProducts([]);
         setShowBatchActions(false);
       }
@@ -104,13 +105,15 @@ export const Inventory: React.FC = () => {
     }
   };
 
-  const submitStockAdjustment = (e: React.FormEvent) => {
+  const submitStockAdjustment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adjustmentQty || Number(adjustmentQty) <= 0) return;
     const qty = Number(adjustmentQty);
     
-    setProducts(prevProducts => prevProducts.map(product => {
-      if (adjustingProductIds.includes(product.id)) {
+    // Batch update via Context
+    for (const id of adjustingProductIds) {
+      const product = products.find(p => p.id === id);
+      if (product) {
         let newStock = product.stock;
         if (adjustmentType === 'add') {
           newStock += qty;
@@ -123,42 +126,56 @@ export const Inventory: React.FC = () => {
         else if (newStock < 10) newStatus = 'Low Stock';
         else newStatus = 'Active';
 
-        return { ...product, stock: newStock, status: newStatus };
+        await updateProduct({ ...product, stock: newStock, status: newStatus as any });
       }
-      return product;
-    }));
+    }
+
     setIsAdjustModalOpen(false);
     setSelectedProducts([]);
   };
 
-  const submitPriceUpdate = (e: React.FormEvent) => {
+  const submitPriceUpdate = async (e: React.FormEvent) => {
       e.preventDefault();
       if (priceAdjustmentValue === '' || isNaN(Number(priceAdjustmentValue))) return;
       const val = Number(priceAdjustmentValue);
 
-      setProducts(prevProducts => prevProducts.map(product => {
-          if (selectedProducts.includes(product.id)) {
-              let newPrice = product.price;
-              if (priceAdjustmentType === 'percentage') {
-                  // val is percentage (e.g., 10 for +10%, -5 for -5%)
-                  newPrice = newPrice * (1 + val / 100);
-              } else {
-                  // val is fixed amount to add (e.g., 5 for +$5, -2 for -$2)
-                  newPrice = newPrice + val;
-              }
-              return { ...product, price: Math.max(0, newPrice) };
-          }
-          return product;
-      }));
+      for (const id of selectedProducts) {
+        const product = products.find(p => p.id === id);
+        if (product) {
+            let newPrice = product.price;
+            if (priceAdjustmentType === 'percentage') {
+                newPrice = newPrice * (1 + val / 100);
+            } else {
+                newPrice = newPrice + val;
+            }
+            await updateProduct({ ...product, price: Math.max(0, newPrice) });
+        }
+      }
       setIsPriceModalOpen(false);
       setSelectedProducts([]);
   };
+
+  if (loading) {
+      return <div className="p-6 text-center text-slate-500">Loading Inventory...</div>;
+  }
 
   return (
     <div className="p-6 relative h-full flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 shrink-0">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Inventory Management</h1>
+                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    Inventory Management
+                    {isOnline ? (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1 font-normal">
+                             <Wifi className="w-3 h-3" /> Online
+                        </span>
+                    ) : (
+                         <span className="text-xs bg-gray-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1 font-normal">
+                             <WifiOff className="w-3 h-3" /> Offline
+                        </span>
+                    )}
+                    {isSyncing && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Syncing...</span>}
+                </h1>
                 <p className="text-slate-500">Manage your products, stock levels, and prices.</p>
             </div>
             <div className="flex gap-3">
@@ -337,6 +354,13 @@ export const Inventory: React.FC = () => {
                                                 className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                             >
                                                 <TrendingUp className="w-4 h-4" />
+                                            </button>
+                                            <button 
+                                                onClick={() => navigate(`/inventory/edit/${product.id}`)}
+                                                title="Edit Product"
+                                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                            >
+                                                <Edit className="w-4 h-4" />
                                             </button>
                                             <button className="p-1 text-slate-400 hover:text-slate-600 hover:bg-gray-100 rounded transition-colors">
                                                 <MoreHorizontal className="w-4 h-4" />
