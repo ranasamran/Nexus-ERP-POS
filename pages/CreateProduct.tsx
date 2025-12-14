@@ -34,8 +34,7 @@ export const CreateProduct: React.FC = () => {
       if (product) {
         setFormData(product);
       } else {
-        // If product not found in current list (maybe unloaded), navigating back might be safer or show loading
-        if (products.length > 0) { // Only redirect if we are sure products are loaded and it's missing
+        if (products.length > 0) {
             navigate('/inventory'); 
         }
       }
@@ -57,7 +56,6 @@ export const CreateProduct: React.FC = () => {
     try {
         const productData = {
             ...formData,
-            // Calculate status based on stock if not manually set (simple logic)
             status: (formData.stock || 0) === 0 ? 'Out of Stock' : (formData.stock || 0) < 10 ? 'Low Stock' : 'Active',
         } as Product;
 
@@ -75,11 +73,13 @@ export const CreateProduct: React.FC = () => {
     }
   };
 
+  const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400";
+
   return (
     <div className="p-6 h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => navigate('/inventory')} className="p-2 hover:bg-gray-100 rounded-full text-slate-500">
+          <button onClick={() => navigate('/inventory')} className="p-2 hover:bg-gray-100 rounded-full text-slate-500 transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold text-slate-900">{isEditMode ? 'Edit Product' : 'Create New Product'}</h1>
@@ -90,36 +90,36 @@ export const CreateProduct: React.FC = () => {
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Product Name</label>
                 <input
                   type="text"
                   name="name"
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                   placeholder="e.g., Wireless Mouse"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">SKU</label>
                 <input
                   type="text"
                   name="sku"
                   required
                   value={formData.sku}
                   onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                   placeholder="e.g., WM-001"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Category</label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className={inputClass}
                 >
                   <option value="">Select Category</option>
                   {MOCK_CATEGORIES.map(cat => (
@@ -128,13 +128,13 @@ export const CreateProduct: React.FC = () => {
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
                 <textarea
                   name="description"
                   rows={3}
                   value={formData.description || ''}
                   onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  className={`${inputClass} resize-none`}
                   placeholder="Product description..."
                 />
               </div>
@@ -146,7 +146,7 @@ export const CreateProduct: React.FC = () => {
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Pricing</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Sales Price</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Sales Price</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <DollarSign className="h-4 w-4 text-slate-400" />
@@ -158,13 +158,13 @@ export const CreateProduct: React.FC = () => {
                                 required
                                 value={formData.price}
                                 onChange={handleChange}
-                                className="w-full pl-9 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={`${inputClass} pl-9`}
                                 placeholder="0.00"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Cost Price</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Cost Price</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <DollarSign className="h-4 w-4 text-slate-400" />
@@ -176,7 +176,7 @@ export const CreateProduct: React.FC = () => {
                                 required
                                 value={formData.cost}
                                 onChange={handleChange}
-                                className="w-full pl-9 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={`${inputClass} pl-9`}
                                 placeholder="0.00"
                             />
                         </div>
@@ -188,7 +188,7 @@ export const CreateProduct: React.FC = () => {
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Inventory</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Current Stock</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Current Stock</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Box className="h-4 w-4 text-slate-400" />
@@ -199,18 +199,18 @@ export const CreateProduct: React.FC = () => {
                                 required
                                 value={formData.stock}
                                 onChange={handleChange}
-                                className="w-full pl-9 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={`${inputClass} pl-9`}
                                 placeholder="0"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Warehouse</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Warehouse</label>
                          <select
                             name="warehouse"
                             value={formData.warehouse}
                             onChange={handleChange}
-                            className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                            className={inputClass}
                         >
                             <option value="Main Warehouse A">Main Warehouse A</option>
                             <option value="Warehouse B">Warehouse B</option>
@@ -229,7 +229,7 @@ export const CreateProduct: React.FC = () => {
                 </div>
                 <div className="flex-1 w-full space-y-4">
                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Image URL</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <LinkIcon className="h-4 w-4 text-slate-400" />
@@ -239,7 +239,7 @@ export const CreateProduct: React.FC = () => {
                                 name="image"
                                 value={formData.image}
                                 onChange={handleChange}
-                                className="w-full pl-9 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={`${inputClass} pl-9`}
                                 placeholder="https://..."
                             />
                         </div>

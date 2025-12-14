@@ -52,6 +52,8 @@ export const Suppliers: React.FC = () => {
       }
   };
 
+  const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400";
+
   return (
     <div className="p-6 h-full flex flex-col">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 shrink-0">
@@ -60,7 +62,7 @@ export const Suppliers: React.FC = () => {
                 <p className="text-slate-500">Manage your vendor relationships.</p>
             </div>
              <div className="flex gap-3">
-                <button onClick={() => openModal()} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 shadow-sm">
+                <button onClick={() => openModal()} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 shadow-sm transition-colors">
                     <Plus className="w-4 h-4" /> Add Supplier
                 </button>
             </div>
@@ -73,7 +75,7 @@ export const Suppliers: React.FC = () => {
                     <input 
                         type="text" 
                         placeholder="Search suppliers..." 
-                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -92,7 +94,7 @@ export const Suppliers: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {filteredSuppliers.map((supplier) => (
-                            <tr key={supplier.id} className="hover:bg-gray-50 group">
+                            <tr key={supplier.id} className="hover:bg-gray-50 group transition-colors">
                                 <td className="px-6 py-4 font-medium text-slate-900">{supplier.name}</td>
                                 <td className="px-6 py-4 text-slate-600">{supplier.contact}</td>
                                 <td className="px-6 py-4 text-blue-600 hover:underline">{supplier.email}</td>
@@ -103,10 +105,10 @@ export const Suppliers: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        <button onClick={() => openModal(supplier)} className="p-1.5 text-slate-500 hover:bg-gray-100 rounded hover:text-blue-600">
+                                        <button onClick={() => openModal(supplier)} className="p-1.5 text-slate-500 hover:bg-gray-100 rounded hover:text-blue-600 transition-colors">
                                             <Edit2 className="w-4 h-4" />
                                         </button>
-                                        <button onClick={() => handleDelete(supplier.id)} className="p-1.5 text-slate-500 hover:bg-red-50 rounded hover:text-red-600">
+                                        <button onClick={() => handleDelete(supplier.id)} className="p-1.5 text-slate-500 hover:bg-red-50 rounded hover:text-red-600 transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -131,47 +133,47 @@ export const Suppliers: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                     <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                         <h3 className="font-bold text-lg text-slate-900">{editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}</h3>
-                        <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-gray-200 rounded-full">
+                        <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-gray-200 rounded-full transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Company Name</label>
                             <input 
                                 type="text" 
                                 required
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={inputClass}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Contact Person</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Contact Person</label>
                             <input 
                                 type="text" 
                                 required
                                 value={formData.contact}
                                 onChange={(e) => setFormData({...formData, contact: e.target.value})}
-                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={inputClass}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
                             <input 
                                 type="email" 
                                 required
                                 value={formData.email}
                                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={inputClass}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
                             <select 
                                 value={formData.status}
                                 onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                className={inputClass}
                             >
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
@@ -181,13 +183,13 @@ export const Suppliers: React.FC = () => {
                             <button 
                                 type="button"
                                 onClick={() => setIsModalOpen(false)}
-                                className="flex-1 px-4 py-2 border border-gray-300 text-slate-700 font-medium rounded-lg hover:bg-gray-50"
+                                className="flex-1 px-4 py-2 border border-gray-300 text-slate-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button 
                                 type="submit"
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
                             >
                                 {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
                             </button>

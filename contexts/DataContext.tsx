@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dbService } from '../services/localDB';
 import { supabase } from '../services/supabaseClient';
-import { Product, Customer, Supplier, Expense, Category, PurchaseOrder } from '../types';
+import { Product, Customer, Supplier, Expense, Category, PurchaseOrder, ExpenseCategory } from '../types';
 
 interface DataContextType {
   products: Product[];
@@ -10,6 +10,7 @@ interface DataContextType {
   suppliers: Supplier[];
   expenses: Expense[];
   categories: Category[];
+  expenseCategories: ExpenseCategory[];
   purchaseOrders: PurchaseOrder[];
   loading: boolean;
   isOnline: boolean;
@@ -39,6 +40,10 @@ interface DataContextType {
   addExpense: (expense: Expense) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
 
+  // Expense Category CRUD
+  addExpenseCategory: (category: ExpenseCategory) => Promise<void>;
+  deleteExpenseCategory: (id: string) => Promise<void>;
+
   // Purchase Order CRUD
   addPurchaseOrder: (po: PurchaseOrder) => Promise<void>;
   updatePurchaseOrder: (po: PurchaseOrder) => Promise<void>;
@@ -57,6 +62,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -92,12 +98,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadLocalData = async () => {
     setLoading(true);
-    const [p, c, s, e, cat, po] = await Promise.all([
+    const [p, c, s, e, cat, ec, po] = await Promise.all([
         dbService.getAll<Product>('products'),
         dbService.getAll<Customer>('customers'),
         dbService.getAll<Supplier>('suppliers'),
         dbService.getAll<Expense>('expenses'),
         dbService.getAll<Category>('categories'),
+        dbService.getAll<ExpenseCategory>('expense_categories'),
         dbService.getAll<PurchaseOrder>('purchase_orders')
     ]);
     setProducts(p);
@@ -105,6 +112,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSuppliers(s);
     setExpenses(e);
     setCategories(cat);
+    setExpenseCategories(ec);
     setPurchaseOrders(po);
     setLoading(false);
   };
@@ -144,8 +152,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Update local state by reloading (simplest) or modifying state directly (optimized)
-    // For simplicity in this demo, we'll reload all data to ensure consistency
-    // Or we can manually update the state arrays:
     updateState();
 
     await dbService.addToSyncQueue({
@@ -209,6 +215,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await performCrud('expenses', 'DELETE', { id }, () => setExpenses(prev => prev.filter(e => e.id !== id)));
   };
 
+  // --- Expense Category CRUD ---
+  const addExpenseCategory = async (category: ExpenseCategory) => {
+    await performCrud('expense_categories', 'CREATE', category, () => setExpenseCategories(prev => [...prev, category]));
+  };
+  const deleteExpenseCategory = async (id: string) => {
+    await performCrud('expense_categories', 'DELETE', { id }, () => setExpenseCategories(prev => prev.filter(c => c.id !== id)));
+  };
+
   // --- Purchase Order CRUD ---
   const addPurchaseOrder = async (po: PurchaseOrder) => {
     await performCrud('purchase_orders', 'CREATE', po, () => setPurchaseOrders(prev => [...prev, po]));
@@ -227,11 +241,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await updatePurchaseOrder(updatedPO);
 
     // 2. Update Product Stock
-    // We iterate sequentially to avoid race conditions on DB if multiple items affect same product (unlikely here but good practice)
     for (const item of po.items) {
       const product = products.find(p => p.id === item.productId);
       if (product) {
-         // Add history or just update? For now just update stock.
          const newStock = product.stock + item.quantity;
          const newStatus = newStock > 10 ? 'Active' : newStock > 0 ? 'Low Stock' : 'Out of Stock';
          await updateProduct({ 
@@ -245,13 +257,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <DataContext.Provider value={{ 
-      products, customers, suppliers, expenses, categories, purchaseOrders,
+      products, customers, suppliers, expenses, categories, expenseCategories, purchaseOrders,
       loading, isOnline, isSyncing,
       addProduct, updateProduct, deleteProduct,
       addCustomer, updateCustomer, deleteCustomer,
       addSupplier, updateSupplier, deleteSupplier,
       addCategory, updateCategory, deleteCategory,
       addExpense, deleteExpense,
+      addExpenseCategory, deleteExpenseCategory,
       addPurchaseOrder, updatePurchaseOrder, receivePurchaseOrder,
       refresh: () => setRefreshTrigger(prev => prev + 1)
     }}>

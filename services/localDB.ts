@@ -1,14 +1,15 @@
 
-import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_SUPPLIERS, MOCK_EXPENSES, MOCK_CATEGORIES, MOCK_PURCHASE_ORDERS } from './mockData';
+import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_SUPPLIERS, MOCK_EXPENSES, MOCK_CATEGORIES, MOCK_PURCHASE_ORDERS, MOCK_EXPENSE_CATEGORIES } from './mockData';
 
 const DB_NAME = 'NexusERP_DB';
-const DB_VERSION = 2; // Incremented version to trigger upgrade
+const DB_VERSION = 3; // Incremented version to trigger upgrade for new store
 const STORES = {
   PRODUCTS: 'products',
   CUSTOMERS: 'customers',
   SUPPLIERS: 'suppliers',
   EXPENSES: 'expenses',
   CATEGORIES: 'categories',
+  EXPENSE_CATEGORIES: 'expense_categories',
   PURCHASE_ORDERS: 'purchase_orders',
   SYNC_QUEUE: 'sync_queue'
 };
@@ -40,6 +41,7 @@ const openDB = (): Promise<IDBDatabase> => {
       createStore(STORES.SUPPLIERS);
       createStore(STORES.EXPENSES);
       createStore(STORES.CATEGORIES);
+      createStore(STORES.EXPENSE_CATEGORIES);
       createStore(STORES.PURCHASE_ORDERS);
       
       if (!db.objectStoreNames.contains(STORES.SYNC_QUEUE)) {
@@ -80,6 +82,7 @@ export const dbService = {
         seedStore(STORES.SUPPLIERS, MOCK_SUPPLIERS),
         seedStore(STORES.EXPENSES, MOCK_EXPENSES),
         seedStore(STORES.CATEGORIES, MOCK_CATEGORIES),
+        seedStore(STORES.EXPENSE_CATEGORIES, MOCK_EXPENSE_CATEGORIES),
         seedStore(STORES.PURCHASE_ORDERS, MOCK_PURCHASE_ORDERS),
     ]);
   },

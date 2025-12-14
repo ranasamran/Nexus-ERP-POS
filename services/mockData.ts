@@ -1,5 +1,5 @@
 
-import { Product, Customer, Order, Supplier, Expense, Category, PurchaseOrder, StockHistoryEntry } from '../types';
+import { Product, Customer, Order, Supplier, Expense, Category, PurchaseOrder, StockHistoryEntry, ExpenseCategory } from '../types';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -146,6 +146,17 @@ export const MOCK_ORDERS: Order[] = [
 export const MOCK_SUPPLIERS: Supplier[] = [
   { id: '1', name: 'Global Tech Imports', contact: 'Sarah Johnson', email: 's.johnson@gti.com', status: 'Active' },
   { id: '2', name: 'Fabric & Co.', contact: 'Mike Smith', email: 'orders@fabric.co', status: 'Active' },
+];
+
+export const MOCK_EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  { id: '1', name: 'Office Supplies', description: 'Stationery and general office needs' },
+  { id: '2', name: 'Logistics', description: 'Shipping, freight, and transportation' },
+  { id: '3', name: 'Maintenance', description: 'Repairs and upkeep' },
+  { id: '4', name: 'Software', description: 'Licenses and subscriptions' },
+  { id: '5', name: 'Utilities', description: 'Electricity, water, internet' },
+  { id: '6', name: 'Salaries', description: 'Employee wages and benefits' },
+  { id: '7', name: 'Rent', description: 'Office and warehouse rent' },
+  { id: '8', name: 'Other', description: 'Miscellaneous expenses' },
 ];
 
 export const MOCK_EXPENSES: Expense[] = [

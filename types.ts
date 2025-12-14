@@ -70,6 +70,12 @@ export interface Category {
   productCount: number;
 }
 
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface PurchaseOrder {
   id: string;
   supplierName: string;
